@@ -1,21 +1,26 @@
-use chrono::{Duration, Local, NaiveDateTime};
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
-use serde::{Deserialize, Serialize};
-use thiserror::Error;
+use chrono::{Duration, Local};
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper, SqliteConnection};
 
-use crate::establish_connection;
-use crate::models::{BalancePeriod, Ride};
+use crate::errors::DatabaseError;
+use crate::models::{BalancePeriod, Driver};
+use crate::schema::drivers::dsl::*;
 use crate::schema::rides::dsl::*;
 
-#[derive(Error, Debug)]
-pub enum BalanceError {
-    #[error("Database error")]
-    DatabaseError(#[from] diesel::result::Error),
-}
-
-pub fn get_balance(_driver_id: i32, period: BalancePeriod) -> Result<f64, BalanceError> {
-    let connection = &mut establish_connection();
+pub async fn get_balance(
+    conn: &mut SqliteConnection,
+    _driver_id: i32,
+    period: BalancePeriod,
+) -> Result<f64, DatabaseError> {
     let now = Local::now().naive_local();
+
+    match drivers
+        .find(_driver_id)
+        .select(Driver::as_select())
+        .first(conn)
+    {
+        Ok(_) => (),
+        Err(_) => return Err(DatabaseError::NoDriverFound),
+    }
 
     let results = match period {
         BalancePeriod::Daily => {
@@ -23,26 +28,33 @@ pub fn get_balance(_driver_id: i32, period: BalancePeriod) -> Result<f64, Balanc
             rides
                 .filter(driver_id.eq(_driver_id))
                 .filter(created_at.ge(day_ago))
+                .filter(created_at.le(now - Duration::days(2)))
                 .select(amount)
-                .load(connection)
+                .load(conn)
         }
         BalancePeriod::Weekly => {
             let week_ago = now - Duration::weeks(1);
             rides
                 .filter(driver_id.eq(_driver_id))
                 .filter(created_at.ge(week_ago))
+                .filter(created_at.le(now - Duration::weeks(2)))
                 .select(amount)
-                .load(connection)
+                .load(conn)
         }
         BalancePeriod::Monthly => {
             let month_ago = now - Duration::days(30); // Approximation for a month
             rides
                 .filter(driver_id.eq(_driver_id))
                 .filter(created_at.ge(month_ago))
+                .filter(created_at.le(now - Duration::days(60)))
                 .select(amount)
-                .load(connection)
+                .load(conn)
         }
     }?;
+
+    if results.is_empty() {
+        return Err(DatabaseError::NoRidesFound);
+    }
 
     Ok(results.iter().sum())
 }

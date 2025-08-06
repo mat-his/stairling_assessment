@@ -18,7 +18,4 @@ diesel::table! {
 
 diesel::joinable!(rides -> drivers (driver_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    drivers,
-    rides,
-);
+diesel::allow_tables_to_appear_in_same_query!(drivers, rides,);

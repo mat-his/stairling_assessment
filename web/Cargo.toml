@@ -7,6 +7,21 @@ edition = "2024"
 actix-web = "4"
 chrono = { version = "0.4.41", features = ["serde"] }
 database = { path = "../database/" }
+diesel = { version = "2.2.0", features = [
+  "sqlite",
+  "returning_clauses_for_sqlite_3_35",
+  "chrono",
+] }
 financial_service = { path = "../financial_service/" }
 serde = "1.0.219"
 thiserror = "2.0.12"
+
+[dev-dependencies]
+pretty_assertions = "1"
+diesel = { version = "2.2.0", features = [
+  "sqlite",
+  "returning_clauses_for_sqlite_3_35",
+  "chrono",
+] }
+lazy_static = "1.5.0"
+diesel_migrations = "2.2.0"

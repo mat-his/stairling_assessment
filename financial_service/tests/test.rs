@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use financial_service::DriverFinancials;
 
     #[test]
     fn test_calculate_net_balance() {

@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Queryable, Selectable, PartialEq)]
+#[derive(Queryable, Selectable, PartialEq, Clone, Insertable)]
 #[diesel(table_name = crate::schema::drivers)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Driver {
@@ -19,7 +19,9 @@ pub struct Driver {
     Associations,
     Debug,
     PartialEq,
+    Insertable,
     AsChangeset,
+    Clone,
 )]
 #[diesel(table_name = crate::schema::rides)]
 #[diesel(belongs_to(Driver, foreign_key = driver_id))]
@@ -31,14 +33,14 @@ pub struct Ride {
     pub amount: f64,
 }
 
-#[derive(Deserialize, Insertable)]
+/* #[derive(Serialize, Deserialize, Insertable, Clone)]
 #[diesel(table_name = crate::schema::rides)]
 pub struct RideForm {
     pub id: i32,
     pub created_at: NaiveDateTime,
     pub driver_id: i32,
     pub amount: f64,
-}
+} */
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum BalancePeriod {

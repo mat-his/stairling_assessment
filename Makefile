@@ -1,9 +1,26 @@
+.PHONY: install test run run-web run-db run-service1 run-service2 clean format lint
+
+# Install dependencies for all services
 install:
-cargo install diesel_cli --no-default-features --features sqlite
+	cargo build --workspace
 
-build:
-	cargo build
+# Run tests for all services
+test:
+	cargo test --workspace
 
-# TODO: run
+# Run the web service
+run:
+	cd web && cargo run
 
-# TODO: clean
+format:
+	cargo fmt
+
+lint:
+	cargo clippy --workspace
+
+doc:
+	cat README.md
+
+# Clean all services
+clean:
+	cargo clean --workspace
