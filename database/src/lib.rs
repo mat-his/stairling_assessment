@@ -2,8 +2,6 @@ pub mod models;
 pub mod queries;
 pub mod schema;
 
-use queries::*;
-
 use diesel::prelude::*;
 use dotenvy::dotenv;
 use std::env;

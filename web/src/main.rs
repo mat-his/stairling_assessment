@@ -1,9 +1,13 @@
 pub mod params;
+
 use actix_web::{
-    App, Either, HttpResponse, HttpServer, Responder, get, post,
+    App, Either, HttpRequest, HttpResponse, HttpServer, Responder, get, post,
     web::{Form, Json, Query},
 };
-use database::models::{BalancePeriod, RideForm};
+use database::{
+    models::{BalancePeriod, RideForm},
+    queries::get_balance::get_balance,
+};
 
 use crate::params::QueryParams;
 
@@ -18,9 +22,13 @@ async fn ingest(data: Either<Json<Vec<RideForm>>, Form<Vec<RideForm>>>) -> impl 
 async fn balances(params: Query<QueryParams>) -> impl Responder {
     let _period: BalancePeriod = params.clone().into_inner().period;
     let _driver_id: i32 = params.into_inner().driver_id;
-    let amount = database::queries::get_balance::get_balance(_driver_id, _period);
-    let tax_amount = financial_service::DriverFinancials::new(amount);
-    HttpResponse::Ok().json(tax_amount.calculate_net_balance())
+    match get_balance(_driver_id, _period) {
+        Ok(balance) => {
+            let tax_amount = financial_service::DriverFinancials::new(balance);
+            HttpResponse::Ok().json(tax_amount.calculate_net_balance())
+        }
+        Err(e) => HttpResponse::InternalServerError().json(e.to_string()),
+    }
 }
 
 #[actix_web::main]

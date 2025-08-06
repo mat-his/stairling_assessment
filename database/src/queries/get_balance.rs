@@ -1,12 +1,19 @@
 use chrono::{Duration, Local, NaiveDateTime};
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 use crate::establish_connection;
 use crate::models::{BalancePeriod, Ride};
 use crate::schema::rides::dsl::*;
 
-pub fn get_balance(_driver_id: i32, period: BalancePeriod) -> f64 {
+#[derive(Error, Debug)]
+pub enum BalanceError {
+    #[error("Database error")]
+    DatabaseError(#[from] diesel::result::Error),
+}
+
+pub fn get_balance(_driver_id: i32, period: BalancePeriod) -> Result<f64, BalanceError> {
     let connection = &mut establish_connection();
     let now = Local::now().naive_local();
 
@@ -35,8 +42,7 @@ pub fn get_balance(_driver_id: i32, period: BalancePeriod) -> f64 {
                 .select(amount)
                 .load(connection)
         }
-    }
-    .expect("Error loading rides");
+    }?;
 
-    results.iter().sum()
+    Ok(results.iter().sum())
 }
