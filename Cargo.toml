@@ -1,0 +1,14 @@
+[package]
+name = "stairling_assessment"
+version = "0.1.0"
+edition = "2024"
+[workspace]
+resolver = "3"
+members = ["database", "financial_service"]
+
+[dependencies]
+actix-web = "4"
+chrono = { version = "0.4.41", features = ["serde"] }
+database = { path = "./database/" }
+financial_service = { path = "./financial_service/" }
+serde = "1.0.219"
